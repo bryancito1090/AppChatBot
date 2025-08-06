@@ -73,4 +73,3 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 }
 
-private fun DependencyHandlerScope.kapt(string: String) {}
