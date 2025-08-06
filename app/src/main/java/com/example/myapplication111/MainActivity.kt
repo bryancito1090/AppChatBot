@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,39 +68,44 @@ class MainActivity : ComponentActivity() {
         messages.clear()
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun ChatScreen() {
-        var userMessage by remember { mutableStateOf("") }
-        val messages = this@MainActivity.messages
-        val context = this
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatScreen() {
+    var userMessage by remember { mutableStateOf("") }
+    val messages = this@MainActivity.messages
+    val context = this
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("EPN Chat") },
-                    navigationIcon = {
-                        Image(
-                            painter = painterResource(R.drawable.ic_owl),
-                            contentDescription = "Owl icon",
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { newChat() }) {
-                            Icon(Icons.Default.Add, contentDescription = "New Chat")
-                        }
-                        IconButton(onClick = { clearHistory() }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Clear History")
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("EPN Chat") },
+                actions = {
+                    IconButton(onClick = { newChat() }) {
+                        Icon(Icons.Default.Add, contentDescription = "New Chat")
                     }
-                )
-            }
-        ) { padding ->
+                    IconButton(onClick = { clearHistory() }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Clear History")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_owl),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .alpha(0.05f)
+                    .size(300.dp)
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
                     .padding(16.dp)
             ) {
                 LazyColumn(modifier = Modifier.weight(1f)) {
@@ -152,6 +158,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
     @Composable
     fun UserMessageBubble(text: String) {
