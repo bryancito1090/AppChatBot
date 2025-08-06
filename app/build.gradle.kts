@@ -5,6 +5,12 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
 }
 
+import java.util.Properties
+
+val properties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
+}
+
 android {
     namespace = "com.example.myapplication111"
     compileSdk = 35
@@ -17,6 +23,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "OPENAI_KEY", "\"${properties["openaiKey"]}\"")
     }
 
     buildTypes {
