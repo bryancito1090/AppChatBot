@@ -137,6 +137,7 @@ class MainActivity : ComponentActivity() {
         val queue = Volley.newRequestQueue(context)
 
         val messages = org.json.JSONArray()
+        // Mensaje de sistema con instrucciones en español
         messages.put(
             JSONObject().apply {
                 put("role", "system")
@@ -146,9 +147,33 @@ class MainActivity : ComponentActivity() {
             }
         )
 
+        // Mensajes previos almacenados en la base de datos
+        runBlocking {
+            val prevMessages = db.messageDao().getAll()
+            prevMessages.forEach { msg ->
+                val role = if (msg.sender == "user") "user" else "assistant"
+                messages.put(
+                    JSONObject().apply {
+                        put("role", role)
+                        put("content", msg.content)
+                    }
+                )
+            }
+        }
+
+        // Nuevo mensaje del usuario
+        messages.put(
+            JSONObject().apply {
+                put("role", "user")
+                put("content", mensaje)
+            }
+        )
+
         val jsonBody = JSONObject().apply {
             put("model", "gpt-4o-mini")
             put("messages", messages)
+            put("temperature", 0.7)
+            put("max_tokens", 150)
         }
 
         val requestBody = jsonBody.toString()
