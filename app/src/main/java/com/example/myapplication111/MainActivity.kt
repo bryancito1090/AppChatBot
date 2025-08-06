@@ -4,18 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.Request
 import androidx.compose.ui.Alignment
-import androidx.compose.material3.MaterialTheme
 import org.json.JSONObject
 import com.example.myapplication111.ui.theme.MyApplication111Theme
 
+
+data class Message(val sender: String, val content: String)
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +36,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ChatScreen() {
         var userMessage by remember { mutableStateOf("") }
-        var botResponse by remember { mutableStateOf("Aquí aparecerá la respuesta del bot") }
+        val messages = remember { mutableStateListOf<Message>() }
         val context = this
 
         Column(
@@ -40,33 +44,65 @@ class MainActivity : ComponentActivity() {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            TextField(
-                value = userMessage,
-                onValueChange = { userMessage = it },
-                label = { Text("Escribe tu mensaje") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {
-                    if (userMessage.isNotBlank()) {
-                        callChatGPTAPI(context, userMessage) { response ->
-                            botResponse = response ?: "No se recibió respuesta"
-                        }
-                        userMessage = ""
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(messages) { message ->
+                    if (message.sender == "user") {
+                        UserMessageBubble(message.content)
+                    } else {
+                        BotMessageBubble(message.content)
                     }
-                },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Enviar")
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                TextField(
+                    value = userMessage,
+                    onValueChange = { userMessage = it },
+                    placeholder = { Text("Escribe tu mensaje") },
+                    modifier = Modifier.weight(1f)
+                )
 
-            Text(text = "Bot dice:", style = MaterialTheme.typography.titleMedium)
-            Text(text = botResponse, style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = {
+                        if (userMessage.isNotBlank()) {
+                            messages.add(Message("user", userMessage))
+                            callChatGPTAPI(context, userMessage) { response ->
+                                messages.add(Message("bot", response ?: "No se recibió respuesta"))
+                            }
+                            userMessage = ""
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                ) {
+                    Text("Enviar")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun UserMessageBubble(text: String) {
+        Surface(
+            color = Color(0xFFE0E0E0),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text(text = text, modifier = Modifier.padding(8.dp))
+        }
+    }
+
+    @Composable
+    fun BotMessageBubble(text: String) {
+        Surface(
+            color = Color(0xFFF5F5F5),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text(text = text, modifier = Modifier.padding(8.dp))
         }
     }
 
