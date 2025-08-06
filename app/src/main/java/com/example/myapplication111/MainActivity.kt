@@ -17,6 +17,12 @@ import com.android.volley.Request
 import androidx.compose.ui.Alignment
 import org.json.JSONObject
 import com.example.myapplication111.ui.theme.MyApplication111Theme
+import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
+import com.example.myapplication111.data.AppDatabase
+import com.example.myapplication111.data.MessageEntity
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 data class Message(val sender: String, val content: String)
@@ -24,8 +30,16 @@ data class Message(val sender: String, val content: String)
 class MainActivity : ComponentActivity() {
 
     private val apiKey = ""
+    private lateinit var db: AppDatabase
+    private val messages = mutableStateListOf<Message>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "messages.db").build()
+        runBlocking {
+            val stored = db.messageDao().getAll()
+            messages.addAll(stored.map { Message(it.sender, it.content) })
+        }
         setContent {
             MyApplication111Theme {
                 ChatScreen()
@@ -36,7 +50,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ChatScreen() {
         var userMessage by remember { mutableStateOf("") }
-        val messages = remember { mutableStateListOf<Message>() }
+        val messages = this@MainActivity.messages
         val context = this
 
         Column(
@@ -67,9 +81,21 @@ class MainActivity : ComponentActivity() {
                 Button(
                     onClick = {
                         if (userMessage.isNotBlank()) {
-                            messages.add(Message("user", userMessage))
-                            callChatGPTAPI(context, userMessage) { response ->
-                                messages.add(Message("bot", response ?: "No se recibió respuesta"))
+                            val content = userMessage
+                            this@MainActivity.lifecycleScope.launch {
+                                db.messageDao().insert(
+                                    MessageEntity(sender = "user", content = content, timestamp = System.currentTimeMillis())
+                                )
+                            }
+                            messages.add(Message("user", content))
+                            callChatGPTAPI(context, content) { response ->
+                                val botReply = response ?: "No se recibió respuesta"
+                                this@MainActivity.lifecycleScope.launch {
+                                    db.messageDao().insert(
+                                        MessageEntity(sender = "bot", content = botReply, timestamp = System.currentTimeMillis())
+                                    )
+                                }
+                                messages.add(Message("bot", botReply))
                             }
                             userMessage = ""
                         }
