@@ -1,36 +1,35 @@
 package com.example.myapplication111.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val DarkColorScheme = darkColorScheme(
-    primary = EpnBlue,
-    secondary = EpnRed,
+    primary = DeepBlue,
+    secondary = SlateGray,
     background = DarkGray,
     surface = DarkGray,
-    onPrimary = White,
-    onSecondary = White,
-    onBackground = White,
-    onSurface = White
+    onPrimary = PureWhite,
+    onSecondary = PureWhite,
+    onBackground = PureWhite,
+    onSurface = PureWhite
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = EpnBlue,
-    secondary = EpnRed,
-    background = White,
-    surface = OwlGray,
-    onPrimary = White,
-    onSecondary = White,
+    primary = DeepBlue,
+    secondary = SlateGray,
+    background = OffWhite,
+    surface = LightGray,
+    onPrimary = PureWhite,
+    onSecondary = PureWhite,
     onBackground = DarkGray,
     onSurface = DarkGray
 )
 
 @Composable
 fun MyApplication111Theme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
