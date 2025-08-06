@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -74,6 +75,8 @@ fun ChatScreen() {
     var userMessage by remember { mutableStateOf("") }
     val messages = this@MainActivity.messages
     val context = this
+    var showHistory by remember { mutableStateOf(false) }
+    var historyMessages by remember { mutableStateOf(listOf<Message>()) }
 
     Scaffold(
         topBar = {
@@ -82,6 +85,14 @@ fun ChatScreen() {
                 actions = {
                     IconButton(onClick = { newChat() }) {
                         Icon(Icons.Default.Add, contentDescription = "New Chat")
+                    }
+                    IconButton(onClick = {
+                        this@MainActivity.lifecycleScope.launch {
+                            historyMessages = db.messageDao().getAll().map { Message(it.sender, it.content) }
+                            showHistory = true
+                        }
+                    }) {
+                        Icon(Icons.Default.History, contentDescription = "View History")
                     }
                     IconButton(onClick = { clearHistory() }) {
                         Icon(Icons.Default.Delete, contentDescription = "Clear History")
@@ -157,6 +168,22 @@ fun ChatScreen() {
                 }
             }
         }
+    }
+    if (showHistory) {
+        AlertDialog(
+            onDismissRequest = { showHistory = false },
+            confirmButton = {
+                TextButton(onClick = { showHistory = false }) { Text("Cerrar") }
+            },
+            title = { Text("Historial") },
+            text = {
+                LazyColumn {
+                    items(historyMessages) { message ->
+                        Text("${message.sender}: ${message.content}")
+                    }
+                }
+            }
+        )
     }
 }
 
