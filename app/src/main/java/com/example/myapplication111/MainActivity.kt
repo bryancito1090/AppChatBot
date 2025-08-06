@@ -32,7 +32,7 @@ data class Message(val sender: String, val content: String)
 
 class MainActivity : ComponentActivity() {
 
-    private val apiKey = "a"
+    private val apiKey = ""
     private lateinit var db: AppDatabase
     private val messages = mutableStateListOf<Message>()
 
@@ -184,7 +184,21 @@ class MainActivity : ComponentActivity() {
         val stringRequest = object : StringRequest(
             Method.POST, url,
             { response ->
-                onResult(response)
+                try {
+                    val jsonResponse = JSONObject(response)
+                    val choices = jsonResponse.getJSONArray("choices")
+                    if (choices.length() > 0) {
+                        val firstChoice = choices.getJSONObject(0)
+                        val message = firstChoice.getJSONObject("message")
+                        val content = message.getString("content")
+                        onResult(content)
+                    } else {
+                        onResult("No se encontró contenido en la respuesta.")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    onResult("Error al parsear la respuesta: ${e.message}")
+                }
             },
             { error ->
                 error.printStackTrace()
