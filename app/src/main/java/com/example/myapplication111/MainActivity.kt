@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.Request
+import com.android.volley.NetworkResponse
+import com.android.volley.Response
+import com.android.volley.toolbox.HttpHeaderParser
 import androidx.compose.ui.Alignment
 import org.json.JSONObject
 import com.example.myapplication111.ui.theme.MyApplication111Theme
@@ -181,25 +184,17 @@ class MainActivity : ComponentActivity() {
         val stringRequest = object : StringRequest(
             Method.POST, url,
             { response ->
-                try {
-                    val jsonResponse = JSONObject(response)
-                    val choices = jsonResponse.getJSONArray("choices")
-                    if (choices.length() > 0) {
-                        val messageObj = choices.getJSONObject(0).getJSONObject("message")
-                        val botText = messageObj.getString("content")
-                        onResult(botText.trim())
-                    } else {
-                        onResult("Sin respuesta")
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    onResult("Error parseando respuesta")
-                }
+                onResult(response)
             },
             { error ->
                 error.printStackTrace()
                 onResult("Error en la petición: ${error.message}")
             }) {
+
+            override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
+                val parsed = response?.data?.let { String(it, Charsets.UTF_8) } ?: ""
+                return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response))
+            }
 
             override fun getBodyContentType(): String = "application/json"
 
