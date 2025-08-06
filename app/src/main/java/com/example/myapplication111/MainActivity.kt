@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,7 +38,7 @@ data class Message(val sender: String, val content: String)
 
 class MainActivity : ComponentActivity() {
 
-    private val apiKey = ""
+    private  val apiKey = ""
     private lateinit var db: AppDatabase
     private val messages = mutableStateListOf<Message>()
 
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
         messages.clear()
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ChatScreen() {
         var userMessage by remember { mutableStateOf("") }
