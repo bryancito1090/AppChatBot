@@ -5,6 +5,7 @@ import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.Response
 import com.android.volley.Request
+import org.json.JSONObject
 
 class ChatGPTService(private val context: Context, private val apiKey: String) {
 
@@ -40,12 +41,16 @@ class ChatGPTService(private val context: Context, private val apiKey: String) {
     }
 
     private fun extraerRespuesta(json: String): String {
-        // Extrae el texto de la respuesta
-        val indexStart = json.indexOf("content") + 10
-        val indexEnd = json.indexOf("\"", indexStart)
-        return if (indexStart >= 0 && indexEnd > indexStart) {
-            json.substring(indexStart, indexEnd)
-        } else {
+        return try {
+            val jsonObj = JSONObject(json)
+            val choices = jsonObj.getJSONArray("choices")
+            if (choices.length() > 0) {
+                val message = choices.getJSONObject(0).getJSONObject("message")
+                message.getString("content")
+            } else {
+                "No se encontró contenido en la respuesta"
+            }
+        } catch (e: Exception) {
             "No se pudo leer la respuesta"
         }
     }
