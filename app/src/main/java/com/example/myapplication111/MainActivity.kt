@@ -3,21 +3,26 @@ package com.example.myapplication111
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.Request
 import com.android.volley.NetworkResponse
 import com.android.volley.Response
 import com.android.volley.toolbox.HttpHeaderParser
-import androidx.compose.ui.Alignment
 import org.json.JSONObject
 import com.example.myapplication111.ui.theme.MyApplication111Theme
 import androidx.lifecycle.lifecycleScope
@@ -50,62 +55,97 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun newChat() {
+        messages.clear()
+    }
+
+    private fun clearHistory() {
+        lifecycleScope.launch {
+            db.messageDao().clearAll()
+        }
+        messages.clear()
+    }
+
     @Composable
     fun ChatScreen() {
         var userMessage by remember { mutableStateOf("") }
         val messages = this@MainActivity.messages
         val context = this
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(messages) { message ->
-                    if (message.sender == "user") {
-                        UserMessageBubble(message.content)
-                    } else {
-                        BotMessageBubble(message.content)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("EPN Chat") },
+                    navigationIcon = {
+                        Image(
+                            painter = painterResource(R.drawable.ic_owl),
+                            contentDescription = "Owl icon",
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { newChat() }) {
+                            Icon(Icons.Default.Add, contentDescription = "New Chat")
+                        }
+                        IconButton(onClick = { clearHistory() }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Clear History")
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+            ) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(messages) { message ->
+                        if (message.sender == "user") {
+                            UserMessageBubble(message.content)
+                        } else {
+                            BotMessageBubble(message.content)
+                        }
                     }
                 }
-            }
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                TextField(
-                    value = userMessage,
-                    onValueChange = { userMessage = it },
-                    placeholder = { Text("Escribe tu mensaje") },
-                    modifier = Modifier.weight(1f)
-                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    TextField(
+                        value = userMessage,
+                        onValueChange = { userMessage = it },
+                        placeholder = { Text("Escribe tu mensaje") },
+                        modifier = Modifier.weight(1f)
+                    )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                Button(
-                    onClick = {
-                        if (userMessage.isNotBlank()) {
-                            val content = userMessage
-                            this@MainActivity.lifecycleScope.launch {
-                                db.messageDao().insert(
-                                    MessageEntity(sender = "user", content = content, timestamp = System.currentTimeMillis())
-                                )
-                            }
-                            messages.add(Message("user", content))
-                            callChatGPTAPI(context, content) { response ->
-                                val botReply = response ?: "No se recibió respuesta"
+                    Button(
+                        onClick = {
+                            if (userMessage.isNotBlank()) {
+                                val content = userMessage
                                 this@MainActivity.lifecycleScope.launch {
                                     db.messageDao().insert(
-                                        MessageEntity(sender = "bot", content = botReply, timestamp = System.currentTimeMillis())
+                                        MessageEntity(sender = "user", content = content, timestamp = System.currentTimeMillis())
                                     )
                                 }
-                                messages.add(Message("bot", botReply))
+                                messages.add(Message("user", content))
+                                callChatGPTAPI(context, content) { response ->
+                                    val botReply = response ?: "No se recibió respuesta"
+                                    this@MainActivity.lifecycleScope.launch {
+                                        db.messageDao().insert(
+                                            MessageEntity(sender = "bot", content = botReply, timestamp = System.currentTimeMillis())
+                                        )
+                                    }
+                                    messages.add(Message("bot", botReply))
+                                }
+                                userMessage = ""
                             }
-                            userMessage = ""
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                ) {
-                    Text("Enviar")
+                        },
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    ) {
+                        Text("Enviar")
+                    }
                 }
             }
         }
@@ -113,25 +153,31 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun UserMessageBubble(text: String) {
-        Surface(
-            color = Color(0xFFE0E0E0),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
         ) {
-            Text(text = text, modifier = Modifier.padding(8.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(text = text, color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(12.dp))
+            }
         }
     }
 
     @Composable
     fun BotMessageBubble(text: String) {
-        Surface(
-            color = Color(0xFFF5F5F5),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
         ) {
-            Text(text = text, modifier = Modifier.padding(8.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.secondary,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(text = text, color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(12.dp))
+            }
         }
     }
 
