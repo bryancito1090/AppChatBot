@@ -14,7 +14,7 @@ class ChatGPTService(private val context: Context, private val apiKey: String) {
 
         val cuerpo = """
             {
-              "model": "gpt-3.5-turbo",
+              "model": "gpt-4o-mini",
               "messages": [{"role": "user", "content": "$mensajeUsuario"}]
             }
         """.trimIndent()
