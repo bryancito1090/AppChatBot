@@ -1,6 +1,10 @@
 package com.example.myapplication111
 
 import android.os.Bundle
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import java.net.UnknownHostException
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -218,6 +222,11 @@ fun ChatScreen() {
     }
 
     private fun callChatGPTAPI(context: ComponentActivity, mensaje: String, onResult: (String?) -> Unit) {
+        if (!isNetworkAvailable(context)) {
+            onResult("Sin conexión a Internet")
+            return
+        }
+
         val url = "https://api.openai.com/v1/chat/completions"
         val queue = Volley.newRequestQueue(context)
 
@@ -284,7 +293,12 @@ fun ChatScreen() {
             },
             { error ->
                 error.printStackTrace()
-                onResult("Error en la petición: ${error.message}")
+                val message = if (error.cause is UnknownHostException) {
+                    "No se pudo conectar con el servidor. Revisa tu conexión a Internet."
+                } else {
+                    "Error en la petición: ${error.message}"
+                }
+                onResult(message)
             }) {
 
             override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
@@ -305,5 +319,13 @@ fun ChatScreen() {
         }
 
         queue.add(stringRequest)
+    }
+
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }
