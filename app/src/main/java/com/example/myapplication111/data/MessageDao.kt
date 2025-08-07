@@ -11,4 +11,7 @@ interface MessageDao {
 
     @Query("SELECT * FROM messages ORDER BY timestamp ASC")
     suspend fun getAll(): List<MessageEntity>
+
+    @Query("SELECT * FROM messages WHERE sender = :sender ORDER BY timestamp ASC")
+    suspend fun getMessagesBySender(sender: String): List<MessageEntity>
 }
