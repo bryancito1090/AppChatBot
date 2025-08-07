@@ -12,6 +12,7 @@ interface MessageDao {
     @Query("SELECT * FROM messages ORDER BY timestamp ASC")
     suspend fun getAll(): List<MessageEntity>
 
-    @Query("DELETE FROM messages")
-    suspend fun clearAll()
+    @Query("SELECT * FROM messages WHERE sender = :sender ORDER BY timestamp ASC")
+    suspend fun getMessagesBySender(sender: String): List<MessageEntity>
+
 }
